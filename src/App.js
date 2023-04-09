@@ -1,101 +1,86 @@
-import { useState, useEffect } from 'react'
-import Weather from './components/Weather'
-import Form from './components/Form'
-import Alert from './components/Alert'
-import Loading from './components/Loading'
+import { useState, useEffect } from "react";
+import Weather from "./components/Weather";
+import Form from "./components/Form";
+import Alert from "./components/Alert";
+import Loading from "./components/Loading";
 
 function App() {
-  const [loading, getLoading] = useState(true)
-  const [error, getError] = useState(false)
-  const [newCity, getNewCity] = useState('')
-  const [weather, setWeather] = useState({
-    city: undefined,
-    country: undefined,
-    description: undefined,
-    humidity: undefined,
-    temp: undefined,
-    icon: undefined,
-    cod: undefined
-  })
-
-  const iconLink = `http://openweathermap.org/img/w/${weather.icon}.png`
-  const imgWeather = <img src={iconLink} alt="" />
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [newCity, setNewCity] = useState();
+  const [weather, setWeather] = useState({});
 
   const inputCity = (event) => {
-    getNewCity(event.target.value)
-  }
+    setNewCity(event.target.value);
+  };
 
   const changeCity = (event) => {
     event.preventDefault();
     if (newCity) {
-      getWeather(newCity)
+      getWeather(newCity);
     }
-  }
+
+    if (weather.cod === 200) {
+      setNewCity("");
+    }
+  };
 
   const getWeather = async (weatherInCity) => {
-    const API_KEY = '6462b9b55c9629dc6a4894a45ea23f96'
-    const url = `http://api.openweathermap.org/data/2.5/weather?q=${weatherInCity}&lang=ua&units=metric&appid=${API_KEY}`
-    const api_url = await fetch(url)
-    const data = await api_url.json()
-    try {
-      setWeather({
-        city: data.name,
-        country: data.sys.country,
-        description: data.weather[0].description,
-        humidity: data.main.humidity,
-        temp: data.main.temp,
-        icon: data.weather[0].icon,
-        cod: data.cod,
+    await fetch(
+      `http://api.openweathermap.org/data/2.5/weather?q=${weatherInCity}&lang=ua&units=metric&appid=6462b9b55c9629dc6a4894a45ea23f96`
+    )
+      .then((data) => data.json())
+      .then((json) => {
+        const { name, cod, sys, main, weather } = json;
+
+        setWeather({
+          name,
+          country: sys.country,
+          description: weather[0].description,
+          humidity: main.humidity,
+          temp: main.temp,
+          icon: weather[0].icon,
+          cod,
+        });
+        setError(false);
       })
-      getError(false)
-    }
-    catch {
-      getError(true)
-      setWeather({ ...weather, cod: data.cod })
-    }
-  }
+      .catch((error) => {
+        setError(true);
+      });
+  };
 
   useEffect(() => {
     const getUserCity = async () => {
-      await fetch('https://ipapi.co/json/')
-        .then(response => response.json())
-        .then(json => {
-          getWeather(json.city)
+      await fetch("https://ipapi.co/json/")
+        .then((response) => response.json())
+        .then((city) => {
+          getWeather(city);
         });
-      getLoading(false)
-    }
-    getUserCity()
-  }, [])
 
-  useEffect(() => {
-    if (weather.cod === 200) {
-      getNewCity('')
-    }
-  }, [weather])
+      setLoading(false);
+    };
+
+    getUserCity();
+  }, []);
 
   return (
     <div className="container">
       <div className="row justify-content-md-center">
         <div className="col-md-auto p-3 mt-5 border bg-light text-center">
-
           <Loading loading={loading} />
 
-          <Weather
-            weather={weather}
-            imgWeather={imgWeather}
-          />
+          <Weather weather={weather} />
 
-          <Alert error={error}
+          <Alert
+            error={error}
             message="Сталася помилка, перевірте правильність введених даних"
           />
-
 
           <Form
             newCity={newCity}
             changeCity={changeCity}
             inputCity={inputCity}
           />
-
         </div>
       </div>
     </div>
