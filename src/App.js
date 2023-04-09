@@ -32,7 +32,7 @@ function App() {
       .then((data) => data.json())
       .then((json) => {
         const { name, cod, sys, main, weather } = json;
-
+        
         setWeather({
           name,
           country: sys.country,
@@ -53,8 +53,8 @@ function App() {
     const getUserCity = async () => {
       await fetch("https://ipapi.co/json/")
         .then((response) => response.json())
-        .then((city) => {
-          getWeather(city);
+        .then((data) => {
+          getWeather(data.city);
         });
 
       setLoading(false);
